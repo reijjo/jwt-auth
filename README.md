@@ -202,10 +202,10 @@ export default Navbar;
 
 ```json
 {
-	"scripts": {
-		"tsc": "tsc"
-	}
-{
+  "scripts": {
+    "tsc": "tsc"
+  }
+}
 ```
 
 - Make `tsconfig.json` file -> `npm run tsc -- --init`
@@ -263,3 +263,144 @@ app.listen(PORT, () => {
 - Go to `http://localhost:3001/ping` just to see that server works
 
 ## Local Storage
+
+### Backend
+
+- Install dependencies `npm install bcryptjs chalk@4 cors dotenv mongoose morgan`, `npm install --save-dev @types/bcryptjs @types/cors @types/morgan`
+
+- Create `.env` file in the `server` folder
+
+```env
+# MongoDB
+MONGO_URI=your_mongodb_uri
+
+# JWT Secret
+JWT_SECRET=secret_for_token
+
+# Server port
+PORT=3001
+```
+
+- To keep the `index.ts` file clean make `app.ts` file inside the `src` folder:
+
+```ts
+import morgan from "morgan";
+import express, { Request, Response } from "express";
+import cors from "cors";
+
+const app = express();
+
+app.use(morgan("dev"));
+app.use(cors());
+app.use(express.json());
+
+app.get("/ping", (_req: Request, res: Response) => {
+  console.log("someone pinged here");
+  res.send("pong");
+});
+
+export { app };
+```
+
+- Update `index.ts` file:
+
+```ts
+import chalk from "chalk";
+import { app } from "./app";
+import { config } from "./utils/config";
+
+app.listen(config.PORT, async () => {
+  console.log(chalk.cyanBright(`Server running on port ${config.PORT}`));
+});
+```
+
+- Create `utils` folder inside `src` folder
+- Create `config.ts` file inside `utils` folder:
+
+```ts
+import dotenv from "dotenv";
+import { Config } from "./types";
+
+dotenv.config();
+
+const PORT = Number(process.env.PORT);
+
+const MONGO_URI = process.env.MONGO_URI;
+
+const JWT_SECRET = String(process.env.JWT_SECRET);
+
+export const config: Config = {
+  PORT,
+  MONGO_URI,
+  JWT_SECRET,
+};
+```
+
+- Create `types.ts` file inside `utils` folder:
+
+```ts
+export type Config = {
+  PORT?: number;
+  MONGO_URI?: string;
+  JWT_SECRET?: string;
+};
+```
+
+- In `src` folder create `models` folder for MongoDB schemas
+- Create `userModel.ts` file in `models` folder:
+
+```ts
+import mongoose from "mongoose";
+
+// Create schema
+const userSchema = new mongoose.Schema({
+  username: String,
+  passwd: String,
+});
+
+// Modify the returned data
+userSchema.set("toJSON", {
+  transform: (_document, returnedUser) => {
+    returnedUser.id = returnedUser._id.toString();
+    delete returnedUser._id;
+    delete returnedUser.__v;
+  },
+});
+
+const UserModel = mongoose.model("User", userSchema);
+
+export { UserModel };
+```
+
+- Create `helpers.ts` file in `utils` folder for MongoDB connection:
+
+```ts
+import mongoose from "mongoose";
+import chalk from "chalk";
+import { config } from "./config";
+
+export const connectMongoDB = async () => {
+  try {
+    console.log(chalk.magentaBright("..."));
+
+    await mongoose.connect(String(config.MONGO_URI));
+
+    console.log(chalk.magentaBright("Connected to MongoDB."));
+  } catch (error: unknown) {
+    console.log("Error connecting MongoDB", error);
+  }
+};
+```
+
+- Use the function in `app.ts` file:
+
+```ts
+// ...
+const app = express();
+
+connectMongoDB();
+
+app.use(morgan("dev"));
+app.use(cors());
+//...
+```
