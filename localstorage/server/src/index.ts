@@ -1,14 +1,7 @@
-import express from "express";
-const app = express();
-app.use(express.json());
+import chalk from "chalk";
+import { app } from "./app";
+import { config } from "./utils/config";
 
-const PORT = 3001;
-
-app.get("/ping", (_req, res) => {
-  console.log("someone pinged here");
-  res.send("pong");
-});
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+app.listen(config.PORT, () => {
+  console.log(chalk.cyanBright(`Server on port ${config.PORT}`));
 });
