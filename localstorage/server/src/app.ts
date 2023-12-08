@@ -2,6 +2,7 @@ import morgan from "morgan";
 import express, { Request, Response } from "express";
 import cors from "cors";
 import { connectMongoDB } from "./utils/helpers";
+import userRouter from "./routes/userRoute";
 
 const app = express();
 
@@ -15,5 +16,7 @@ app.get("/ping", (_req: Request, res: Response) => {
   console.log("someone pinged here");
   res.send("pong");
 });
+
+app.use("/users", userRouter);
 
 export { app };

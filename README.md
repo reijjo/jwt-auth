@@ -2,9 +2,9 @@
 
 How to use json web tokens
 
-## Prerequisite (Basic backend and frontend setup)
+# Prerequisite (Basic backend and frontend setup)
 
-### Frontend
+## Frontend
 
 - Make project folder
 - Make client folder inside the projects folder `npm create vite@latest client` -> `React` -> `TypeScript + SWC`
@@ -262,9 +262,9 @@ app.listen(PORT, () => {
 - `npm run dev` inside the `server` folder to start the server
 - Go to `http://localhost:3001/ping` just to see that server works
 
-## Local Storage
+# Local Storage
 
-### Backend
+## Backend
 
 - Install dependencies `npm install bcryptjs chalk@4 cors dotenv mongoose morgan`, `npm install --save-dev @types/bcryptjs @types/cors @types/morgan`
 
@@ -313,6 +313,8 @@ app.listen(config.PORT, async () => {
   console.log(chalk.cyanBright(`Server running on port ${config.PORT}`));
 });
 ```
+
+### MongoDB Connection
 
 - Create `utils` folder inside `src` folder
 - Create `config.ts` file inside `utils` folder:
@@ -404,3 +406,144 @@ app.use(morgan("dev"));
 app.use(cors());
 //...
 ```
+
+### Controllers and Routes
+
+#### User
+
+- Create `controllers` folder inside `src` folder
+- `userController.ts` file inside the `controllers` folder to communicate with database:
+
+```ts
+import { Request, Response } from "express";
+import { UserModel } from "../models/userModel";
+
+// @Route users
+// @Method GET
+// @What Get all users from database
+export const getAllUsers = async (_req: Request, res: Response) => {
+  try {
+    // Gets all the users from database and doesn't return the users passwords to frontend
+    const users = await UserModel.find({}).select("-passwd");
+    res.status(200).json(users);
+  } catch (error: unknown) {
+    console.log("Error fetching all users", error);
+
+    // Send status and message and style for InfoMessage component in frontend
+    res
+      .status(500)
+      .send({ message: "Server error fetching all users.", info: "error" });
+  }
+};
+```
+
+- Create `routes` folder inside the `src` folder
+- And create `userRoute.ts` file in `routes` folder:
+
+```ts
+import express from "express";
+import { getAllUsers } from "../controllers/userController";
+
+// Create a router for all the user routes
+const userRouter = express.Router();
+
+userRouter.get("/", getAllUsers);
+
+export default userRouter;
+```
+
+- Add userRouter to `app.ts`:
+
+```ts
+//...
+app.get("/ping", (_req: Request, res: Response) => {
+  console.log("someone pinged here");
+  res.send("pong");
+});
+
+// http://localhost:3001/users
+app.use("/users", userRouter);
+
+export { app };
+//...
+```
+
+- Test with Postman that the route works `GET request to http://localhost:3001/users` and it should return empty array
+- Create register controller in `userController.ts`:
+
+```ts
+export const register = async (req: Request, res: Response) => {
+  const { username, passwd } = req.body;
+
+  // If empty field
+  if (!username || !passwd) {
+    return res
+      .status(400)
+      .json({ message: "No empty fields, thanks.", info: "error" });
+  }
+
+  // Check if username already exists
+  try {
+    const existingUsername = await UserModel.findOne({ username });
+
+    if (existingUsername) {
+      return res
+        .status(400)
+        .json({ message: "Username already exists.", info: "warning" });
+    }
+  } catch (error: unknown) {
+    console.log("Error checking duplicate users", error);
+    return res
+      .status(500)
+      .json({ message: "Server error checking duplicates", info: "error" });
+  }
+
+  // Hash the user password
+  const saltRounds = 10;
+  const hashPasswd = await bcrypt.hash(passwd, saltRounds);
+
+  // Save user to database
+  try {
+    const newUser = new UserModel({
+      username,
+      passwd: hashPasswd,
+    });
+
+    const savedUser = await newUser.save();
+
+    return res.status(201).json({
+      message: `User '${savedUser.username}' created!`,
+      info: "success",
+    });
+  } catch (error: unknown) {
+    console.log("Error creating user", error);
+    return res
+      .status(500)
+      .json({ message: "Server error creating user", info: "error" });
+  }
+};
+```
+
+- Add register controller to `userRoute.ts`:
+
+```ts
+//...
+userRouter.get("/", getAllUsers);
+userRouter.post("/", register);
+
+export default userRouter;
+```
+
+- Test the route with Postman `POST request to http://localhost:3001/users`, add body type JSON in Postman and the body
+
+```json
+{
+  "username": "testiukko",
+  "passwd": "salasana"
+}
+```
+
+- Then try again with the same body. Should return message that user already exists
+- And then `GET request to http://localhost:3001/users` should return the user that just created
+
+#### Auth

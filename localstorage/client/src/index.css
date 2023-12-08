@@ -61,7 +61,8 @@ a:hover {
 }
 
 #home,
-#register {
+#register,
+#dash {
   display: flex;
   flex-direction: column;
   justify-content: center;
