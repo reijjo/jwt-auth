@@ -9,6 +9,11 @@ export type Login = {
   passwd: string;
 };
 
+export type Register = {
+  username: string;
+  passwd: string;
+};
+
 export type LoginUser = {
   id: string;
   username: string;

@@ -3,6 +3,7 @@ import express, { Request, Response } from "express";
 import cors from "cors";
 import { connectMongoDB } from "./utils/helpers";
 import userRouter from "./routes/userRoute";
+import authRouter from "./routes/authRoute";
 
 const app = express();
 
@@ -18,5 +19,6 @@ app.get("/ping", (_req: Request, res: Response) => {
 });
 
 app.use("/users", userRouter);
+app.use("/auth", authRouter);
 
 export { app };
