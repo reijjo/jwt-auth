@@ -185,7 +185,7 @@ const Navbar = () => {
 export default Navbar;
 ```
 
-### Backend
+## Backend
 
 - Make `server` folder (not inside the `client` folder)
 - `npm init -y` inside the `server` folder
@@ -262,9 +262,7 @@ app.listen(PORT, () => {
 - `npm run dev` inside the `server` folder to start the server
 - Go to `http://localhost:3001/ping` just to see that server works
 
-# Local Storage
-
-## Backend
+## More Backend
 
 - Install dependencies `npm install bcryptjs chalk@4 cors dotenv mongoose morgan`, `npm install --save-dev @types/bcryptjs @types/cors @types/morgan`
 
@@ -407,9 +405,7 @@ app.use(cors());
 //...
 ```
 
-### Controllers and Routes
-
-#### User
+### UserController and Route
 
 - Create `controllers` folder inside `src` folder
 - `userController.ts` file inside the `controllers` folder to communicate with database:
@@ -546,4 +542,4 @@ export default userRouter;
 - Then try again with the same body. Should return message that user already exists
 - And then `GET request to http://localhost:3001/users` should return the user that just created
 
-#### Auth
+# Local Storage
